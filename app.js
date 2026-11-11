@@ -14,7 +14,7 @@ C.mods=[
  {id:"x3",track:"biz",name:"Week 3 · Money, site and clients",units:["B11","B12","B21","B13","B14","B22"]},
  {id:"x4",track:"biz",name:"Week 4 · Tenders, handover and management",units:["B15","B16","B23","B17","B18","B24"]}];
 [...C.core.map(u=>({...u,track:"core"})),...C.biz.map(u=>({...u,track:"biz"}))].forEach(u=>{
-  u.vocab=u.v.map((s,i)=>{const [w,pos,mean,ar,ex]=s.split("|");return{w,pos,mean,ar,ex,img:{s:`spr/${u.id}.jpg`,i}}});
+  u.vocab=u.v.map((s,i)=>{const [w,pos,mean,ar,ex]=s.split("|");return{w,pos,mean,ar,ex,img:{s:`spr-${u.id}.jpg`,i}}});
   ((window.EXPR||{})[u.id]||[]).forEach(s=>{const [w,pos,mean,ar,ex]=s.split("|");u.vocab.push({w,pos,mean,ar,ex,img:null,x:true})});
   u.qs=u.checks.map(s=>{const [q,o,a]=s.split("|");return{q,opts:o.split(","),a:+a}});UNITS[u.id]=u});
 C.mods.forEach(m=>{UNITS["R"+m.id]={id:"R"+m.id,review:true,track:m.track,covers:m.units,mod:m,title:"Review · "+m.name}});
@@ -30,7 +30,7 @@ const KEY="shadowlab_v2";
 let S={cur:"1",view:"unit",mode:"listen",sub:"vocab",rate:1,rep:3,gap:1.3,voice:"",hide:false,lang:"ar",u:{},rv:{},log:{},exitBest:null,coach:{},done:{},bank:{},mine:{},fav:{},fold:{},autoSpeak:true,bankF:"all",part:"p",hideMine:false,cmp:true};
 try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s)S=Object.assign(S,s)}catch(e){}
 ["coach","done","bank","mine","fav","fold","u","rv","log"].forEach(k=>{if(!S[k]||typeof S[k]!=="object")S[k]={}});
-if(["level","how","words","unit","phrases"].indexOf(S.view)<0)S.view="unit";
+if(["level","how","words","unit","phrases"].indexOf(S.view)<0)S.view="unit";if(S.sub==="speak")S.sub="vocab";
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function P(id){const p=S.u[id]||(S.u[id]={});p.l=p.l||0;p.s=p.s||0;p.r=p.r||0;p.g=p.g||[null,null,null];p.m=p.m||{};p.p=p.p||[0,0,0,0];p.wc=p.wc||0;p.rp=p.rp||0;return p}
 const dkey=d=>{const z=new Date(d);return z.getFullYear()+"-"+String(z.getMonth()+1).padStart(2,"0")+"-"+String(z.getDate()).padStart(2,"0")};
@@ -45,7 +45,7 @@ const spr=(m,c,l)=>`<span class="spr ${c}" ${l?`role="img" aria-label="${esc(l)}
 /* ===== progress ===== */
 function steps(id){const p=P(id),u=UNITS[id];const used=u.vocab.filter(v=>(p.m[v.w]||0)>=1).length;const gr=p.g.filter((x,i)=>x===u.qs[i].a).length;const sp=p.p.filter(Boolean).length+(p.wc?1:0);
   const o={listen:[Math.min(p.l,3),3],shadow:[Math.min(p.s,2),2],read:[p.r?1:0,1]};if(u.dlg)o.roleplay=[Math.min(p.rp,2),2];
-  return Object.assign(o,{grammar:[gr,3],words:[Math.min(used,6),6],speak:[Math.min(sp,2),2]})}
+  return Object.assign(o,{grammar:[gr,3],words:[Math.min(used,6),6]})}
 const LBL={listen:"Listen",shadow:"Shadow",read:"Read aloud",roleplay:"Role-play",grammar:"Grammar",words:"Words used",speak:"Speaking"};
 const isDone=id=>!!S.done[id];
 const nextItem=t=>trackList(t).find(id=>!isDone(id))||null;
@@ -239,22 +239,18 @@ function renderMain(){const main=document.getElementById("main");
     ${p.g.some((x,i)=>x!=null&&x!==u.qs[i].a)?`<div class="row" style="margin-top:12px"><button class="btn" id="gRetry">Try the wrong ones again</button></div>`:""}
   </section>
 
-  <section class="card"><span class="tag">4 · Vocab / Speak</span>
+  <section class="card"><span class="tag">4 · Vocabulary</span>
     <div class="vtabs" role="tablist">
       <button class="vtab ${S.sub==="vocab"?"on":""}" data-sub="vocab">Vocabulary <span class="b">${u.vocab.length}</span></button>
       <button class="vtab ${S.sub==="track"?"on":""}" data-sub="track">Word Tracking <span class="b num" id="trkB">${u.vocab.filter(v=>(p.m[v.w]||0)>=5).length}/${u.vocab.length}</span></button>
-      <button class="vtab ${S.sub==="speak"?"on":""}" data-sub="speak">Speaking Prompts <span class="b">${u.p.length}</span></button>
     </div>
     <div id="subBody">${subHTML(u)}</div>
   </section>
 
-  ${coachHTML(u)}
-
   <section class="card"><span class="tag">Finish</span>
     <div class="card-h"><h2>${isDone(u.id)?"Session completed":"Done with this session?"}</h2></div>
     <p style="margin:0 0 12px;color:var(--muted)">Marking it complete moves its ${u.track==="biz"?"phrases":"words"} to My Words and updates your course progress.</p>
-    <div class="row"><button class="btn ${isDone(u.id)?"good":"pri"}" id="markBottom">${isDone(u.id)?"✓ Completed":"Mark as Complete"}</button>
-    <button class="btn" id="copyAI">Copy a ${u.track==="biz"?"meeting role-play":"conversation"} prompt for your AI chat</button></div>
+    <div class="row"><button class="btn ${isDone(u.id)?"good":"pri"}" id="markBottom">${isDone(u.id)?"✓ Completed":"Mark as Complete"}</button></div>
   </section>`;
   bindLesson(u);setTurn(false);mark(-1);updPlay()}
 function pillsHTML(id){return Object.entries(steps(id)).map(([k,[a,b]])=>`<div class="pp ${a>=b?"ok":""}">${LBL[k]}<b class="num">${a}/${b}</b></div>`).join("")}
@@ -317,7 +313,7 @@ function bindLesson(u){const main=document.getElementById("main");
   main.querySelectorAll("[data-sub]").forEach(b=>b.onclick=()=>{S.sub=b.dataset.sub;save();main.querySelectorAll("[data-sub]").forEach(x=>x.classList.toggle("on",x===b));document.getElementById("subBody").innerHTML=subHTML(u);bindSub(u)});
   bindSub(u);bindCoach(u);
   document.getElementById("markBottom").onclick=()=>markClick(u);
-  document.getElementById("copyAI").onclick=()=>copy(aiPrompt(u))}
+  {const ca=document.getElementById("copyAI");if(ca)ca.onclick=()=>copy(aiPrompt(u))}}
 function bindSub(u){const box=document.getElementById("subBody");bindSay(box);
   const redraw=()=>{const b=document.getElementById("subBody");if(!b)return;b.innerHTML=subHTML(u);bindSub(u);if(S.flash){S.flash=null;save()}};
   const vi=document.getElementById("vW"),vg=document.getElementById("vGo");
@@ -611,8 +607,8 @@ function bindExam(){const card=document.getElementById("examCard");const s=docum
     card.innerHTML='<span class="tag">A2 exit test</span>'+examHTML();bindExam()})}
 
 /* ===== how to ===== */
-const METHOD={en:[["Session","Listen","Listen 3 times without reading. Notice stress, rhythm and intonation."],["Session","Shadow","Speak with the voice twice. Shadow mode pauses after each sentence so you can repeat it."],["Session","Read aloud","Read the whole passage yourself. Tap any sentence to check how it sounds."],["Session","Grammar","Read the grammar focus and answer the three questions."],["Session","Words and speaking","Learn the words, then answer the questions out loud. Use at least six of the words."],["Session","Voice coach","Speak with dictation, copy the prompt into any AI chat, and get corrected. Then press Mark as Complete."]],
-ar:[["السيشن","اسمع","اسمع ٣ مرات من غير ما تقرا. ركّز على النبرة والإيقاع."],["السيشن","قلّد","اتكلم مع الصوت مرتين. وضع Shadow بيقف بعد كل جملة عشان تكررها."],["السيشن","اقرا بصوت عالي","اقرا النص كله لوحدك. دوس على أي جملة تسمعها."],["السيشن","الجرامر","اقرا القاعدة وجاوب التلات أسئلة."],["السيشن","الكلمات والكلام","اتعلم الكلمات وجاوب الأسئلة بصوت عالي، واستخدم ٦ كلمات على الأقل."],["السيشن","Voice coach","اتكلم والكيبورد يكتب، وانسخ البرومبت لأي شات AI يصححلك. وبعدين دوس Mark as Complete."]]};
+const METHOD={en:[["Session","Listen","Listen 3 times without reading. Notice stress, rhythm and intonation."],["Session","Shadow","Speak with the voice twice. Shadow mode pauses after each sentence so you can repeat it."],["Session","Read aloud","Read the whole passage yourself. Tap any sentence to check how it sounds."],["Session","Grammar","Read the grammar focus and answer the three questions."],["Session","Words","Learn the words and tick each time you use one. Use at least six of them, then press Mark as Complete."]],
+ar:[["السيشن","اسمع","اسمع ٣ مرات من غير ما تقرا. ركّز على النبرة والإيقاع."],["السيشن","قلّد","اتكلم مع الصوت مرتين. وضع Shadow بيقف بعد كل جملة عشان تكررها."],["السيشن","اقرا بصوت عالي","اقرا النص كله لوحدك. دوس على أي جملة تسمعها."],["السيشن","الجرامر","اقرا القاعدة وجاوب التلات أسئلة."],["السيشن","الكلمات","اتعلم الكلمات وعلّم كل مرة تستخدم فيها كلمة. استخدم ٦ كلمات على الأقل، وبعدين دوس Mark as Complete."]]};
 function renderHow(main){const m=METHOD[S.lang],ar=S.lang==="ar";
   main.innerHTML=`<section class="card"><span class="tag">The method</span><div class="card-h"><h2 class="${ar?"ar":""}">${ar?"إزاي تشتغل على كل سيشن":"How to work on each session"}</h2>
    <span class="seg"><button id="mEn" class="${ar?"":"on"}">English</button><button id="mAr" class="${ar?"on":""}">العربية</button></span></div>
