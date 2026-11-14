@@ -1,4 +1,4 @@
-import { firebaseConfig, SUPPORT_CONTACT } from "./config.js";
+import { firebaseConfig, SUPPORT_CONTACT, ADMIN_EMAILS } from "./config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, setPersistence, browserLocalPersistence }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -51,6 +51,19 @@ $("lgOut").addEventListener("click", async () => {
   location.reload();
 });
 
+// نقل التقدم من النسخة القديمة
+$("impOpen").addEventListener("click", () => { $("impMsg").textContent = ""; $("impText").value = ""; $("imp").hidden = false; $("impText").focus(); });
+$("impClose").addEventListener("click", () => { $("imp").hidden = true; });
+$("impGo").addEventListener("click", async () => {
+  const raw = $("impText").value.trim();
+  let data = null; try { data = JSON.parse(raw); } catch (e) {}
+  if (!data || typeof data !== "object" || !(data.u || data.done || data.mine || data.bank)) { $("impMsg").textContent = "الكلام ده مش تقدم صحيح. انسخه تاني من زرار Export progress."; return; }
+  $("impGo").disabled = true; $("impMsg").textContent = "جاري النقل…";
+  nativeSet.call(localStorage, KEY, JSON.stringify(data));
+  await flush();
+  location.reload();
+});
+
 // حفظ التقدم على السيرفر: أي حفظ يعمله التطبيق بيتبعت للحساب بعد ثانيتين
 const nativeSet = Storage.prototype.setItem;
 Storage.prototype.setItem = function (k, v) {
@@ -75,19 +88,21 @@ function loadScript(name) {
   });
 }
 
-async function checkAccess(uid) {
-  // اختياري: مستند access/{uid} فيه until (تاريخ انتهاء الاشتراك) أو active=false
+const isAdmin = u => !!(u && u.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(u.email.toLowerCase()));
+async function checkAccess(user) {
+  if (isAdmin(user)) return "ok";
+  // لازم يكون فيه مستند access/{uid} فيه until (تاريخ انتهاء الاشتراك)، وإلا الحساب ميفتحش
   try {
-    const a = await getDoc(doc(db, "access", uid));
-    if (!a.exists()) return true;
+    const a = await getDoc(doc(db, "access", user.uid));
+    if (!a.exists()) return "none";
     const d = a.data();
-    if (d.active === false) return false;
+    if (d.active === false) return "off";
     if (d.until) {
       const until = d.until.toDate ? d.until.toDate() : new Date(d.until);
-      if (until < new Date()) return false;
+      if (until < new Date()) return "expired";
     }
-    return true;
-  } catch (e) { return true; }
+    return "ok";
+  } catch (e) { return "error"; }
 }
 
 onAuthStateChanged(auth, async user => {
@@ -95,8 +110,11 @@ onAuthStateChanged(auth, async user => {
   if (started) return;
   busy(true);
 
-  if (!(await checkAccess(user.uid))) {
-    msg("اشتراكك انتهى. للتجديد: " + SUPPORT_CONTACT);
+  const acc = await checkAccess(user);
+  if (acc !== "ok") {
+    msg(acc === "expired" ? "اشتراكك انتهى. للتجديد: " + SUPPORT_CONTACT
+      : acc === "error" ? "مقدرناش نتأكد من اشتراكك. اتأكد من الإنترنت وجرب تاني."
+      : "الحساب ده مش مفعّل. للتفعيل: " + SUPPORT_CONTACT);
     await signOut(auth); busy(false); return;
   }
 
@@ -126,6 +144,7 @@ onAuthStateChanged(auth, async user => {
   $("gate").hidden = true;
   $("acctMail").textContent = user.email;
   $("acct").hidden = false;
+  $("impOpen").hidden = !isAdmin(user);
   try { for (const f of APP_FILES) await loadScript(f); }
   catch (name) { document.body.insertAdjacentHTML("beforeend", `<p style="padding:20px">ملف ناقص: ${name}.js</p>`); }
 });

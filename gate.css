@@ -9,11 +9,21 @@
 .gate-card label{display:flex;flex-direction:column;gap:6px;font-size:.88rem;font-weight:700;color:var(--muted,#5E6680)}
 .gate-card input{font:inherit;font-size:1rem;font-weight:400;padding:11px 12px;border-radius:10px;border:1px solid var(--line,#DCE1EC);background:var(--paper,#fff);color:var(--ink,#141A2E)}
 .gate-card input:focus{outline:2px solid var(--primary,#3653D4);outline-offset:1px}
-#lgBtn{margin-top:4px;border:0;border-radius:10px;padding:12px;font:inherit;font-weight:700;font-size:1rem;background:var(--primary,#3653D4);color:var(--primary-ink,#fff);cursor:pointer}
-#lgBtn:disabled{opacity:.6;cursor:default}
+#lgBtn,.gate-pri{margin-top:4px;border:0;border-radius:10px;padding:12px;font:inherit;font-weight:700;font-size:1rem;background:var(--primary,#3653D4);color:var(--primary-ink,#fff);cursor:pointer}
+#lgBtn:disabled,.gate-pri:disabled{opacity:.6;cursor:default}
 .gate-msg{margin:0;min-height:1.2em;color:var(--bad,#C2453A);font-size:.9rem;font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif;direction:rtl;text-align:right}
 .gate-link{border:0;background:none;color:var(--primary,#3653D4);font:inherit;font-size:.88rem;cursor:pointer;align-self:flex-start;padding:0}
 .acct{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:50;display:flex;align-items:center;gap:8px;background:var(--paper,#fff);border:1px solid var(--line,#DCE1EC);border-radius:999px;padding:4px 4px 4px 12px;font-size:.78rem;color:var(--muted,#5E6680);box-shadow:0 4px 14px rgba(20,26,46,.08);max-width:calc(100vw - 24px)}
 .acct[hidden]{display:none!important}
 .acct span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .acct button{border:1px solid var(--line,#DCE1EC);background:var(--bg,#F2F4F9);color:var(--ink,#141A2E);border-radius:999px;padding:4px 10px;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+
+.acct button+button{margin-left:-2px}
+
+/* soft UI for sign-in */
+.gate-card{border:0!important;border-radius:28px!important;background:var(--bg,#E8EAEE)!important;box-shadow:9px 9px 20px var(--lo,#C5C9D1),-9px -9px 20px var(--hi,#fff)!important}
+.gate-logo svg rect{fill:var(--accent,#F08A4B)}
+#lgBtn,.gate-pri{border-radius:999px!important;background:var(--primary,#23262D)!important;color:var(--primary-ink,#fff)!important;box-shadow:4px 4px 9px var(--lo,#C5C9D1),-4px -4px 9px var(--hi,#fff)!important}
+.acct{border:0!important;background:var(--bg,#E8EAEE)!important;box-shadow:4px 4px 9px var(--lo,#C5C9D1),-4px -4px 9px var(--hi,#fff)!important}
+.acct button{border:0!important;background:var(--bg,#E8EAEE)!important;box-shadow:inset 3px 3px 6px var(--lo,#C5C9D1),inset -3px -3px 6px var(--hi,#fff)!important}
+.gate-link{color:var(--accent,#F08A4B)!important}

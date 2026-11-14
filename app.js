@@ -250,7 +250,7 @@ function renderMain(){const main=document.getElementById("main");
   <section class="card"><span class="tag">Finish</span>
     <div class="card-h"><h2>${isDone(u.id)?"Session completed":"Done with this session?"}</h2></div>
     <p style="margin:0 0 12px;color:var(--muted)">Marking it complete moves its ${u.track==="biz"?"phrases":"words"} to My Words and updates your course progress.</p>
-    <div class="row"><button class="btn ${isDone(u.id)?"good":"pri"}" id="markBottom">${isDone(u.id)?"✓ Completed":"Mark as Complete"}</button></div>
+    <div class="row"><button class="btn ${isDone(u.id)?"good":"pri"}" id="markBottom">${isDone(u.id)?"✓ Completed":"Mark as Complete"}</button><button class="btn" id="copyAI">Copy ${u.track==="biz"?"meeting role-play":"conversation"} prompt (Gemini / ChatGPT)</button></div>
   </section>`;
   bindLesson(u);setTurn(false);mark(-1);updPlay()}
 function pillsHTML(id){return Object.entries(steps(id)).map(([k,[a,b]])=>`<div class="pp ${a>=b?"ok":""}">${LBL[k]}<b class="num">${a}/${b}</b></div>`).join("")}
@@ -284,19 +284,20 @@ function mineCards(u){const n0=u.vocab.length;const st=VADD&&VADD.u===u.id?VADD.
      ${x.ex?`<div class="vrow"><span class="lab">EXAMPLE</span><span>${esc(x.ex)}${x.exAr?`<span class="vexar" dir="rtl">${esc(x.exAr)}</span>`:""}</span>${spkBtn(x.ex,"Hear example")}</div>`:""}
      <div class="vmine"><button class="lnk" data-vedit="${id}">Edit in My Words</button><button class="lnk" data-vdel="${id}">Remove</button></div></div>`).join("")+
    `<div class="vcard vadd"><span class="rib">ADD YOUR OWN</span>
-     <div class="vaddin"><b>Add a ${u.track==="biz"?"phrase":"word"} to this session</b><p>Type it in English or Arabic and press +. Then add the Arabic and an example from My Words (Edit).</p>
+     <div class="vaddin"><b>Add a ${u.track==="biz"?"phrase":"word"} to this session</b><p>Type it in English or Arabic and press +. The Arabic meaning and an example are filled in for you.</p>
      <div class="qadd"><input id="vW" placeholder="${u.track==="biz"?"e.g. as per the contract":"e.g. get used to"}" autocomplete="off" aria-label="Word or expression"><button class="btn pri qgo" id="vGo" aria-label="Add to this session">+</button></div>
      <span class="cstate" id="vSt" role="status">${esc(st)}</span></div></div>`}
 async function quickAdd(w,unit,stEl,btn,inp,done){if(fillCtl){fillCtl.abort();return}
   if(!w){toast("Type a word first.");inp&&inp.focus();return}
   if(isDup(w)){stEl.textContent=`"${w}" is already in My Words.`;return}
   const mk=(W,r)=>{const id="m"+Date.now().toString(36);const x={w:W,date:TODAY(),t:Date.now(),m:0};if(unit)x.unit=unit;["pos","ar","note","mean","ex","exAr"].forEach(k=>x[k]=r&&r[k]?String(r[k]).trim():"");S.mine[id]=x;S.flash=id;save();return x};
-  if(!SAMPLE){const x=mk(w,null);say(w);done(`Saved "${w}". Add the meaning from My Words (Edit).`);return}
+  if(!FILL){const x=mk(w,null);say(w);done(`Saved "${w}". Add the meaning from My Words (Edit).`);return}
   fillCtl=new AbortController();btn.textContent="■";inp.disabled=true;stEl.textContent=`Saving "${w}"…`;
   try{const r=await fillWord(w,"",fillCtl.signal);if(!r||!r.mean||!r.w)throw{code:"invalid_json"};
     const W=String(r.w).trim();fillCtl=null;if(isDup(W)){done(`"${W}" is already in My Words.`);return}
     const x=mk(W,r);say(W);done(`Saved "${W}" — ${x.ar}`);
-  }catch(e){fillCtl=null;stEl.textContent=fillErr(e);btn.textContent="+";inp.disabled=false}}
+  }catch(e){fillCtl=null;if(e&&e.code==="cancelled"){stEl.textContent="Stopped.";btn.textContent="+";inp.disabled=false;return}
+    const x=mk(w,null);say(w);done(`Saved "${w}". Couldn't find the meaning online, add it from My Words (Edit).`)}}
 function bindLesson(u){const main=document.getElementById("main");
   main.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{stopAll();S.mode=b.dataset.mode;if(S.mode==="role")S.part="d";save();renderMain()});
   main.querySelectorAll("[data-part]").forEach(b=>{if(b.tagName==="BUTTON")b.onclick=()=>{stopAll();S.part=b.dataset.part;if(S.part==="p"&&S.mode==="role")S.mode="listen";save();renderMain()}});
@@ -528,7 +529,7 @@ function renderWords(main){const all=bankRows();const q=(S.bankQ||"").toLowerCas
 function addHTML(){const d=S.addDraft||{};const open=S.addOpen||false;const ed=S.editId&&S.mine[S.editId];
   return `<section class="card" id="addCard"><span class="tag">Add your own</span>
    <div class="card-h"><h2>${ed?"Edit your word":"Add a word or expression"}</h2></div>
-   ${open?"":`<p style="margin:0 0 12px;color:var(--muted)">Type the word or expression (English or Arabic) and press <b>+</b>. It is saved straight to your list. Add the Arabic and an example from Edit.</p>
+   ${open?"":`<p style="margin:0 0 12px;color:var(--muted)">Type the word or expression (English or Arabic) and press <b>+</b>. The Arabic meaning, English meaning and an example are filled in for you and saved to your list.</p>
    <div class="qadd"><input id="qW" placeholder="e.g. back-to-back meetings" autocomplete="off" aria-label="Word or expression"><button class="btn pri qgo" id="qGo" aria-label="Add">+</button></div>
    <div class="row" style="margin-top:8px"><span class="cstate" id="qSt" role="status"></span><button class="lnk" id="addOpen">Add it by hand instead</button></div>`}
    ${open?`<div class="addf">
@@ -541,19 +542,27 @@ function addHTML(){const d=S.addDraft||{};const open=S.addOpen||false;const ed=S
     <label class="fw"><span>Show it in a session (optional)</span><select id="aUnit">${unitOpts(d.unit||"")}</select></label>
     <label class="fw"><span>Example in Arabic</span><input id="aExAr" dir="rtl" value="${esc(d.exAr||"")}" placeholder="ترجمة المثال"></label>
    </div>
-   <div class="row"><button class="btn pri" id="addSave">${ed?"Save changes":"Save to My Words"}</button>${SAMPLE?`<button class="btn" id="addFill">Auto-fill</button>`:""}<button class="btn" id="addCancel">Cancel</button><span class="cstate" id="addSt" role="status"></span></div>`:""}
+   <div class="row"><button class="btn pri" id="addSave">${ed?"Save changes":"Save to My Words"}</button>${FILL?`<button class="btn" id="addFill">Auto-fill</button>`:""}<button class="btn" id="addCancel">Cancel</button><span class="cstate" id="addSt" role="status"></span></div>`:""}
   </section>`}
 function unitOpts(sel){return `<option value="">No session, My Words only</option>`+C.mods.map(m=>`<optgroup label="${esc(m.name)}">${m.units.filter(id=>UNITS[id]&&!UNITS[id].review).map(id=>`<option value="${id}" ${id===sel?"selected":""}>${esc(label(id))}</option>`).join("")}</optgroup>`).join("")}
 const FLDS=[["aUnit","unit"],["aW","w"],["aPos","pos"],["aAr","ar"],["aNote","note"],["aMean","mean"],["aEx","ex"],["aExAr","exAr"]];
 function addDraft(){const o={};FLDS.forEach(([id,k])=>{const e=document.getElementById(id);o[k]=e?e.value.trim():""});return o}
 function isDup(w,except){w=w.toLowerCase();return Object.entries(S.mine).some(([id,x])=>id!==except&&x.w.toLowerCase()===w)||Object.keys(S.bank).some(k=>k.toLowerCase()===w)}
-function fillWord(w,ar,signal){return SAMPLE.json(`You help an Egyptian adult (A2 level, working towards B1) learn English. He is a contracts manager in a fit-out construction company.
-He typed this to save to his English word list: "${w}"${ar?` (he thinks it means: ${ar})`:""}.
-If he typed Arabic, give the most natural English word or expression for it. If the English is misspelt, correct it. Keep it as a word or expression, not a sentence.
-Return JSON only:
-{"w": "the English word or expression, correctly spelt", "pos": "noun / verb / adjective / adverb / phrase / phrasal verb / idiom", "ar": "short Arabic meaning, Egyptian-friendly", "note": "one short Arabic sentence (Egyptian Arabic is fine) on when and how to use it, e.g. formal or informal, common words that go with it", "mean": "simple English meaning, under 12 words, A2 level", "ex": "one natural example sentence, under 14 words, about work or daily life", "exAr": "Arabic translation of the example"}`,{signal})}
+const FILL=true;
+async function fillWord(w,ar,signal){
+  const ab=e=>{if(e&&e.name==="AbortError")throw{code:"cancelled"}};
+  const tr=async(q,pair)=>{try{const r=await fetch("https://api.mymemory.translated.net/get?q="+encodeURIComponent(q)+"&langpair="+pair,{signal});const j=await r.json();const t=j&&j.responseData&&j.responseData.translatedText;return t&&!/MYMEMORY|INVALID|QUERY LENGTH/i.test(t)?String(t).trim():""}catch(e){ab(e);return ""}};
+  let en=String(w).trim(),arW=ar||"";
+  if(/[؀-ۿ]/.test(en)){arW=en;en=(await tr(en,"ar|en")).replace(/[.!?]+$/,"")||en}
+  let pos="",mean="",ex="";
+  try{const r=await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/"+encodeURIComponent(en.toLowerCase()),{signal});
+    if(r.ok){const j=await r.json();for(const e of j||[])for(const m of e.meanings||[])for(const d of m.definitions||[]){if(!mean){mean=d.definition;pos=m.partOfSpeech||""}if(!ex&&d.example)ex=d.example}}}catch(e){ab(e)}
+  if(!arW)arW=await tr(en,"en|ar");
+  const exAr=ex?await tr(ex,"en|ar"):"";
+  if(!mean&&!arW)throw{code:"not_found"};
+  return{w:en,pos,ar:arW,note:"",mean:mean||arW,ex,exAr}}
 let fillCtl=null;
-function fillErr(e){const code=e&&e.code;return code==="cancelled"?"Stopped.":code==="rate_limited"?"Too many requests. Wait a minute, then try again.":["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(code)?"Add it by hand.":"Couldn't fill it in. Try again or add it by hand."}
+function fillErr(e){const code=e&&e.code;return code==="cancelled"?"Stopped.":code==="not_found"?"Couldn't find it in the dictionary. Check the spelling or add it by hand.":code==="rate_limited"?"Too many requests. Wait a minute, then try again.":["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(code)?"Add it by hand.":"Couldn't fill it in. Try again or add it by hand."}
 function bindAdd(main){const card=document.getElementById("addCard");if(!card)return;
   const o=document.getElementById("addOpen");if(o)o.onclick=()=>{const q=document.getElementById("qW");S.addOpen=true;S.editId=null;S.addDraft={w:q?q.value.trim():""};save();renderWords(main);const w=document.getElementById("aW");if(w)w.focus()};
   const q=document.getElementById("qW"),qg=document.getElementById("qGo");
@@ -621,7 +630,7 @@ function renderHow(main){const m=METHOD[S.lang],ar=S.lang==="ar";
 
 /* ===== utils ===== */
 let tt;function toast(t){const el=document.getElementById("toast");el.textContent=t;el.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>el.classList.remove("on"),2400)}
-function copy(text){const ok=()=>toast("Copied. Paste it into ChatGPT, Gemini or any AI chat.");try{navigator.clipboard.writeText(text).then(ok,()=>fallback(text,ok))}catch(e){fallback(text,ok)}}
+function copy(text){const ok=()=>toast("Copied. Paste it into Gemini or ChatGPT and start talking.");try{navigator.clipboard.writeText(text).then(ok,()=>fallback(text,ok))}catch(e){fallback(text,ok)}}
 function fallback(text,ok){const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ok()}catch(e){toast("Couldn't copy. Select the text manually.")}ta.remove()}
 
 function renderAll(){renderTop();renderSide();renderMain()}

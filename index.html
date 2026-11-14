@@ -399,6 +399,7 @@ body{font-weight:400;-webkit-font-smoothing:antialiased}
 </div>
 <div class="toast" id="toast" role="status"></div>
 
+<link rel="stylesheet" href="theme.css">
 <div id="gate" class="gate">
   <form id="loginForm" class="gate-card" autocomplete="on">
     <div class="gate-logo"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#3653D4"/><path d="M9 20c2-6 5-9 7-9s5 3 7 9" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="16" cy="22" r="2" fill="#DD9533"/></svg><b>Shadowing Lab</b></div>
@@ -411,7 +412,17 @@ body{font-weight:400;-webkit-font-smoothing:antialiased}
     <button id="lgForgot" type="button" class="gate-link">Forgot password?</button>
   </form>
 </div>
-<div id="acct" class="acct" hidden><span id="acctMail"></span><button id="lgOut" type="button">Sign out</button></div>
+<div id="acct" class="acct" hidden><span id="acctMail"></span><button id="impOpen" type="button">Import progress</button><button id="lgOut" type="button">Sign out</button></div>
+<div id="imp" class="gate" hidden>
+  <div class="gate-card">
+    <h1>Import progress</h1>
+    <p class="gate-sub ar">افتح نسختك القديمة، دوس Export progress، وارجع الصق هنا ودوس Import.</p>
+    <textarea id="impText" rows="6" placeholder="Paste here" style="font:inherit;font-size:.85rem;padding:10px;border-radius:10px;border:1px solid var(--line,#DCE1EC);background:var(--paper,#fff);color:var(--ink,#141A2E);resize:vertical"></textarea>
+    <button id="impGo" type="button" class="gate-pri">Import</button>
+    <p id="impMsg" class="gate-msg" role="alert"></p>
+    <button id="impClose" type="button" class="gate-link">Cancel</button>
+  </div>
+</div>
 <script type="module" src="auth.js"></script>
 
 

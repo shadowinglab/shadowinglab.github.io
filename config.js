@@ -10,4 +10,7 @@ export const firebaseConfig = {
 };
 
 // رقم الواتساب أو الإيميل اللي يظهر للعميل لو اشتراكه انتهى
+// إيميلات الأدمن: بيدخلوا من غير اشتراك، وبيظهرلهم زرار Import progress
+export const ADMIN_EMAILS = ["hossamzaid62@gmail.com"];
+
 export const SUPPORT_CONTACT = "واتساب: 01xxxxxxxxx";
